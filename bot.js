@@ -3,7 +3,7 @@ const botToken = "7683002219:AAFU774eqbiHwh677khxIfmAXsK8BXpZwBs"; // Ваш т�
 const adminChatId = "5848581114"; // Ваш chat_id
 
 // URL вашего Mini App (пока заглушка, обновим после хостинга)
-const miniAppUrl = "https://order-bot.vercel.app";
+const miniAppUrl = "https://inquisitive-platypus-5ea83.netlify.app";
 
 // Хранилище для фото (временное)
 const photoStorage = {};
