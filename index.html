@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Заказ товаров</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- ExcelJS для создания Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>Оформление заказа</h2>
+    <div class="form-group">
+      <label for="order-number">Номер заказа</label>
+      <input type="text" id="order-number" placeholder="Введите номер заказа" required>
+    </div>
+    <div id="items">
+      <div class="item" id="item-1">
+        <h3>Товар 1</h3>
+        <div class="form-group">
+          <label>Ссылка на товар</label>
+          <input type="text" name="link" placeholder="Введите ссылку" required>
+        </div>
+        <div class="form-group">
+          <label>Размер</label>
+          <input type="text" name="size" placeholder="Введите размер" required>
+        </div>
+        <div class="form-group">
+          <label>Количество</label>
+          <input type="number" name="quantity" placeholder="Введите количество" required>
+        </div>
+        <div class="form-group">
+          <label>Цена (юани)</label>
+          <input type="number" name="price" placeholder="Введите цену" required>
+        </div>
+        <div class="form-group">
+          <label>Цвет</label>
+          <input type="text" name="color" placeholder="Введите цвет" required>
+        </div>
+      </div>
+    </div>
+    <button onclick="addItem()">Добавить ещё товар</button>
+    <button onclick="submitOrder()">Отправить заказ</button>
+    <div id="result"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
