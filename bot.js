@@ -1,16 +1,29 @@
-const axios = require('axios');
+const TelegramBot = require('node-telegram-bot-api');
+const express = require('express');
 
 const botToken = "7591200004:AAGQN8C0P8SsaaDrWZLqXfSiLe4WJ75rhAI";
 const adminChatId = "5848581114";
-
 const miniAppUrl = "https://inquisitive-platypus-5eaa83.netlify.app";
 
+const bot = new TelegramBot(botToken, { polling: true });
 const photoStorage = {};
 
-async function sendMiniAppLink(chatId) {
-  await axios.post(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-    chat_id: chatId,
-    text: "Нажмите на кнопку ниже, чтобы оформить заказ:",
+// Настройка Express сервера
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.status(200).send('Bot is running!');
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
+// Логика бота
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, "Нажмите на кнопку ниже, чтобы оформить заказ:", {
     reply_markup: {
       inline_keyboard: [
         [
@@ -22,52 +35,20 @@ async function sendMiniAppLink(chatId) {
       ]
     }
   });
-}
+});
 
-async function handleUpdate(update) {
-  const chatId = update.message?.chat?.id || update.callback_query?.message?.chat?.id;
-  const messageText = update.message?.text;
-  const photo = update.message?.photo;
+bot.on('photo', (msg) => {
+  const chatId = msg.chat.id;
+  const fileId = msg.photo[msg.photo.length - 1].file_id;
+  const caption = msg.caption || `Фото для заказа от ${chatId}`;
 
-  if (messageText === '/start') {
-    await sendMiniAppLink(chatId);
-  }
+  if (!photoStorage[chatId]) photoStorage[chatId] = [];
+  photoStorage[chatId].push({ fileId, caption });
 
-  if (photo) {
-    const fileId = photo[photo.length - 1].file_id;
-    const caption = update.message.caption || `Фото для заказа от ${chatId}`;
-    if (!photoStorage[chatId]) photoStorage[chatId] = [];
-    photoStorage[chatId].push({ fileId, caption });
+  bot.sendMessage(chatId, `Фото "${caption}" получено. Если у вас есть ещё фото, отправьте их.`);
+  bot.sendPhoto(adminChatId, fileId, { caption });
+});
 
-    await axios.post(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      chat_id: chatId,
-      text: `Фото "${caption}" получено. Если у вас есть ещё фото, отправьте их.`
-    });
-
-    await axios.post(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-      chat_id: adminChatId,
-      photo: fileId,
-      caption: caption
-    });
-  }
-}
-
-async function startBot() {
-  let offset = 0;
-  while (true) {
-    try {
-      const response = await axios.get(`https://api.telegram.org/bot${botToken}/getUpdates`, {
-        params: { offset: offset + 1, timeout: 30 }
-      });
-      const updates = response.data.result;
-      for (const update of updates) {
-        offset = update.update_id;
-        await handleUpdate(update);
-      }
-    } catch (error) {
-      console.error('Ошибка при получении обновлений:', error.message);
-    }
-  }
-}
-
-startBot();
+bot.on('polling_error', (error) => {
+  console.error('Ошибка при поллинге:', error.message);
+});
