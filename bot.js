@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const botToken = "7683002219:AAFU774eqbiHwh677khxIfmAXsK8BXpZwBs";
+const botToken = "7591200004:AAGQN8C0P8SsaaDrWZLqXfSiLe4WJ75rhAI";
 const adminChatId = "5848581114";
 
 const miniAppUrl = "https://inquisitive-platypus-5ea83.netlify.app";
