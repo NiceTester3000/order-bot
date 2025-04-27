@@ -36,6 +36,10 @@ function addItem() {
       <label>Цвет</label>
       <input type="text" name="color" placeholder="Введите цвет" required>
     </div>
+    <div class="form-group">
+      <label>Фото товара</label>
+      <input type="file" name="photo" accept="image/*" required>
+    </div>
   `;
   document.getElementById('items').appendChild(newItem);
 }
@@ -50,7 +54,9 @@ async function submitOrder() {
     }
 
     const items = [];
-    let totalItems = 0; // Считаем количество строк (позиций)
+    let totalItems = 0;
+
+    const formData = new FormData();
 
     for (let i = 1; i <= itemCount; i++) {
       const item = document.getElementById(`item-${i}`);
@@ -60,14 +66,24 @@ async function submitOrder() {
       const quantity = parseInt(inputs[2].value);
       const price = parseFloat(inputs[3].value);
       const color = inputs[4].value;
+      const photoInput = inputs[5];
 
       if (!link || !size || !quantity || !price || !color) {
         window.Telegram.WebApp.showAlert('Пожалуйста, заполните все поля для товара ' + i);
         return;
       }
 
-      totalItems += 1; // Каждая строка — это 1 позиция
-      items.push({ orderNumber, link, size, quantity, price, color, photo: `Ожидается фото для товара ${i}` });
+      if (!photoInput.files || !photoInput.files[0]) {
+        window.Telegram.WebApp.showAlert('Пожалуйста, загрузите фото для товара ' + i);
+        return;
+      }
+
+      totalItems += 1;
+
+      const itemData = { orderNumber, link, size, quantity, price, color, photo: `Фото для товара ${i}` };
+      items.push(itemData);
+
+      formData.append(`photo-${i}`, photoInput.files[0]);
     }
 
     const deliveryPerItem = totalItems > 20 ? 15 : totalItems >= 10 ? 20 : 30;
@@ -76,7 +92,7 @@ async function submitOrder() {
       const totalWithDelivery = (item.quantity * item.price) + totalDelivery;
       return {
         ...item,
-        totalItems, // Теперь это просто количество строк
+        totalItems,
         deliveryPerItem,
         totalDelivery,
         totalWithDelivery
@@ -85,11 +101,12 @@ async function submitOrder() {
 
     showFilledData(itemsWithDelivery);
 
-    // Отправляем данные на сервер
+    formData.append('items', JSON.stringify(itemsWithDelivery));
+
+    // Отправляем данные и фото на сервер
     const response = await fetch('https://order-bot-shjq.onrender.com/submit-order', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(itemsWithDelivery)
+      body: formData
     });
 
     if (!response.ok) {
@@ -97,7 +114,6 @@ async function submitOrder() {
     }
 
     await notifyUser(userId, itemsWithDelivery);
-    await requestPhotos(userId, orderNumber, itemCount);
   } catch (error) {
     window.Telegram.WebApp.showAlert('Произошла ошибка: ' + error.message);
   }
@@ -136,7 +152,7 @@ function showFilledData(items) {
         </tr>
       `).join('')}
     </table>
-    <p>Пожалуйста, отправьте фото для каждого товара боту. Укажите, к какому товару относится фото (например, "Фото для товара 1").</p>
+    <p>Заказ успешно отправлен! Администратор получит ваш заказ и фото.</p>
   `;
 }
 
@@ -148,19 +164,7 @@ async function notifyUser(userId, items) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: userId,
-      text: `Ваш заказ (${items[0].orderNumber}):\n${message}`
-    })
-  });
-}
-
-// Функция запроса фото у клиента
-async function requestPhotos(userId, orderNumber, itemCount) {
-  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: userId,
-      text: `Ваш заказ (${orderNumber}) принят! Пожалуйста, отправьте фото для каждого товара (${itemCount} шт.). Укажите, к какому товару относится фото (например, "Фото для товара 1").`
+      text: `Ваш заказ (${items[0].orderNumber}) принят!\n${message}`
     })
   });
 }

@@ -39,8 +39,8 @@ app.post('/submit-order', upload.any(), async (req, res) => {
     worksheet.columns = [
       { header: 'Номер заказа', key: 'orderNumber', width: 15 },
       { header: 'Ссылка', key: 'link', width: 30 },
+      { header: 'Фото', key: 'photo', width: 30 }, // Переместили сюда
       { header: 'Размер', key: 'size', width: 10 },
-      { header: 'Фото', key: 'photo', width: 30 },
       { header: 'Кол-во', key: 'quantity', width: 10 },
       { header: 'Цена', key: 'price', width: 10 },
       { header: 'Цвет', key: 'color', width: 10 },
@@ -50,12 +50,23 @@ app.post('/submit-order', upload.any(), async (req, res) => {
       { header: 'Итог (с доставкой)', key: 'totalWithDelivery', width: 15 }
     ];
 
-    items.forEach(item => {
+    const photoIds = [];
+
+    // Отправляем фото админу и сохраняем file_id
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const caption = `Фото для товара ${i + 1} (Заказ ${items[0].orderNumber})`;
+      const sentPhoto = await bot.sendPhoto(adminChatId, file.buffer, { caption });
+      photoIds[i] = sentPhoto.photo[sentPhoto.photo.length - 1].file_id;
+    }
+
+    // Добавляем file_id в данные для Excel
+    items.forEach((item, index) => {
       worksheet.addRow({
         orderNumber: item.orderNumber,
         link: item.link,
+        photo: photoIds[index] || 'Не загружено', // Добавляем file_id фото
         size: item.size,
-        photo: item.photo,
         quantity: item.quantity,
         price: item.price,
         color: item.color,
@@ -70,13 +81,6 @@ app.post('/submit-order', upload.any(), async (req, res) => {
     const fileName = `order_${items[0].orderNumber}.xlsx`;
 
     await bot.sendDocument(adminChatId, buffer, {}, { filename: fileName, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-    // Отправляем фото админу
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-      const caption = `Фото для товара ${i + 1} (Заказ ${items[0].orderNumber})`;
-      await bot.sendPhoto(adminChatId, file.buffer, { caption });
-    }
 
     res.status(200).send('Заказ отправлен!');
   } catch (error) {
