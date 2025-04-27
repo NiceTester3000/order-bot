@@ -86,7 +86,7 @@ async function submitOrder() {
     showFilledData(itemsWithDelivery);
 
     // Отправляем данные на сервер
-    const response = await fetch('https://<ваш-URL-на-Render>/submit-order', {
+    const response = await fetch('https://order-bot-shjq.onrender.com/submit-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(itemsWithDelivery)
@@ -105,7 +105,7 @@ async function submitOrder() {
 
 // Функция отображения заполненных данных
 function showFilledData(items) {
-  const resultDiv = document.getElementById('result'); // Исправлено: getElementOrId -> getElementById
+  const resultDiv = document.getElementById('result');
   resultDiv.innerHTML = `
     <h3>Ваш заказ:</h3>
     <table>
