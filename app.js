@@ -1,7 +1,7 @@
 // Переменные
 let itemCount = 1;
-const botToken = "7683002219:AAFU7T4heqbiHW677KhxIAX5K8BXpZwb5"; // Ваш токен бота
-const adminChatId = "7683002219:AAFU774eqbiHwh677khxIfmAXsK8BXpZwBs"; // Вставьте ваш chat_id
+const botToken = "7591200004:AAGQN8C0P8SsaaDrWZLqXfSiLe4WJ75rhAI"; // Ваш токен бота
+const adminChatId = "5848581114"; // Вставьте ваш chat_id
 let userId;
 
 // Инициализация Telegram Web App
@@ -42,64 +42,70 @@ function addItem() {
 
 // Функция отправки заказа
 async function submitOrder() {
-  const orderNumber = document.getElementById('order-number').value;
-  if (!orderNumber) {
-    window.Telegram.WebApp.showAlert('Пожалуйста, укажите номер заказа');
-    return;
-  }
-
-  const items = [];
-  let totalItems = 0;
-
-  // Собираем данные о товарах
-  for (let i = 1; i <= itemCount; i++) {
-    const item = document.getElementById(`item-${i}`);
-    const inputs = item.querySelectorAll('input');
-    const link = inputs[0].value;
-    const size = inputs[1].value;
-    const quantity = parseInt(inputs[2].value);
-    const price = parseFloat(inputs[3].value);
-    const color = inputs[4].value;
-
-    if (!link || !size || !quantity || !price || !color) {
-      window.Telegram.WebApp.showAlert('Пожалуйста, заполните все поля для товара ' + i);
+  try {
+    const orderNumber = document.getElementById('order-number').value;
+    if (!orderNumber) {
+      window.Telegram.WebApp.showAlert('Пожалуйста, укажите номер заказа');
       return;
     }
 
-    totalItems += quantity;
-    items.push({ orderNumber, link, size, quantity, price, color, photo: `Ожидается фото для товара ${i}` });
+    const items = [];
+    let totalItems = 0;
+
+    for (let i = 1; i <= itemCount; i++) {
+      const item = document.getElementById(`item-${i}`);
+      const inputs = item.querySelectorAll('input');
+      const link = inputs[0].value;
+      const size = inputs[1].value;
+      const quantity = parseInt(inputs[2].value);
+      const price = parseFloat(inputs[3].value);
+      const color = inputs[4].value;
+
+      if (!link || !size || !quantity || !price || !color) {
+        window.Telegram.WebApp.showAlert('Пожалуйста, заполните все поля для товара ' + i);
+        return;
+      }
+
+      totalItems += quantity;
+      items.push({ orderNumber, link, size, quantity, price, color, photo: `Ожидается фото для товара ${i}` });
+    }
+
+    const deliveryPerItem = totalItems > 20 ? 15 : totalItems >= 10 ? 20 : 30;
+    const itemsWithDelivery = items.map(item => {
+      const totalDelivery = deliveryPerItem * item.quantity;
+      const totalWithDelivery = (item.quantity * item.price) + totalDelivery;
+      return {
+        ...item,
+        totalItems,
+        deliveryPerItem,
+        totalDelivery,
+        totalWithDelivery
+      };
+    });
+
+    showFilledData(itemsWithDelivery);
+
+    // Отправляем данные на сервер
+    const response = await fetch('https://<ваш-URL-на-Render>/submit-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(itemsWithDelivery)
+    });
+
+    if (!response.ok) {
+      throw new Error('Ошибка при отправке заказа на сервер');
+    }
+
+    await notifyUser(userId, itemsWithDelivery);
+    await requestPhotos(userId, orderNumber, itemCount);
+  } catch (error) {
+    window.Telegram.WebApp.showAlert('Произошла ошибка: ' + error.message);
   }
-
-  // Рассчитываем стоимость доставки
-  const deliveryPerItem = totalItems > 20 ? 15 : totalItems >= 10 ? 20 : 30;
-  const itemsWithDelivery = items.map(item => {
-    const totalDelivery = deliveryPerItem * item.quantity;
-    const totalWithDelivery = (item.quantity * item.price) + totalDelivery;
-    return {
-      ...item,
-      totalItems,
-      deliveryPerItem,
-      totalDelivery,
-      totalWithDelivery
-    };
-  });
-
-  // Показываем клиенту заполненные данные
-  showFilledData(itemsWithDelivery);
-
-  // Создаём Excel-файл
-  createExcelFile(itemsWithDelivery);
-
-  // Отправляем уведомление клиенту
-  await notifyUser(userId, itemsWithDelivery);
-
-  // Просим клиента отправить фото
-  await requestPhotos(userId, orderNumber, itemCount);
 }
 
 // Функция отображения заполненных данных
 function showFilledData(items) {
-  const resultDiv = document.getElementOrId('result');
+  const resultDiv = document.getElementById('result'); // Исправлено: getElementOrId -> getElementById
   resultDiv.innerHTML = `
     <h3>Ваш заказ:</h3>
     <table>
@@ -132,71 +138,6 @@ function showFilledData(items) {
     </table>
     <p>Пожалуйста, отправьте фото для каждого товара боту. Укажите, к какому товару относится фото (например, "Фото для товара 1").</p>
   `;
-}
-
-// Функция создания Excel-файла с помощью ExcelJS
-async function createExcelFile(items) {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Заказы');
-
-  // Заголовки
-  worksheet.columns = [
-    { header: 'Номер заказа', key: 'orderNumber', width: 15 },
-    { header: 'Ссылка', key: 'link', width: 30 },
-    { header: 'Размер', key: 'size', width: 10 },
-    { header: 'Фото', key: 'photo', width: 30 },
-    { header: 'Кол-во', key: 'quantity', width: 10 },
-    { header: 'Цена', key: 'price', width: 10 },
-    { header: 'Цвет', key: 'color', width: 10 },
-    { header: 'Кол-во позиций', key: 'totalItems', width: 15 },
-    { header: 'Доставка за позицию', key: 'deliveryPerItem', width: 20 },
-    { header: 'Общая доставка', key: 'totalDelivery', width: 15 },
-    { header: 'Итог (с доставкой)', key: 'totalWithDelivery', width: 15 }
-  ];
-
-  // Добавляем данные
-  items.forEach(item => {
-    worksheet.addRow({
-      orderNumber: item.orderNumber,
-      link: item.link,
-      size: item.size,
-      photo: item.photo,
-      quantity: item.quantity,
-      price: item.price,
-      color: item.color,
-      totalItems: item.totalItems,
-      deliveryPerItem: item.deliveryPerItem,
-      totalDelivery: item.totalDelivery,
-      totalWithDelivery: item.totalWithDelivery
-    });
-  });
-
-  // Стили для заголовков
-  worksheet.getRow(1).font = { bold: true };
-  worksheet.getRow(1).fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FFEEEEEE' }
-  };
-
-  // Сохраняем файл
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-  // Отправляем Excel-файл через Telegram
-  sendExcelToTelegram(blob, `order_${items[0].orderNumber}.xlsx`);
-}
-
-// Функция отправки Excel-файла через Telegram
-async function sendExcelToTelegram(excelFile, fileName) {
-  const formData = new FormData();
-  formData.append('chat_id', adminChatId);
-  formData.append('document', excelFile, fileName);
-
-  await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
-    method: 'POST',
-    body: formData
-  });
 }
 
 // Функция отправки уведомления клиенту
