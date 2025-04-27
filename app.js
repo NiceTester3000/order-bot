@@ -1,7 +1,7 @@
 // Переменные
 let itemCount = 1;
-const botToken = "7591200004:AAGQN8C0P8SsaaDrWZLqXfSiLe4WJ75rhAI"; // Ваш токен бота
-const adminChatId = "5848581114"; // Вставьте ваш chat_id
+const botToken = "7591200004:AAGQN8C0P8SsaaDrWZLqXfSiLe4WJ75rhAI";
+const adminChatId = "5848581114";
 let userId;
 
 // Инициализация Telegram Web App
@@ -50,7 +50,7 @@ async function submitOrder() {
     }
 
     const items = [];
-    let totalItems = 0;
+    let totalItems = 0; // Считаем количество строк (позиций)
 
     for (let i = 1; i <= itemCount; i++) {
       const item = document.getElementById(`item-${i}`);
@@ -66,7 +66,7 @@ async function submitOrder() {
         return;
       }
 
-      totalItems += quantity;
+      totalItems += 1; // Каждая строка — это 1 позиция
       items.push({ orderNumber, link, size, quantity, price, color, photo: `Ожидается фото для товара ${i}` });
     }
 
@@ -76,7 +76,7 @@ async function submitOrder() {
       const totalWithDelivery = (item.quantity * item.price) + totalDelivery;
       return {
         ...item,
-        totalItems,
+        totalItems, // Теперь это просто количество строк
         deliveryPerItem,
         totalDelivery,
         totalWithDelivery
@@ -116,7 +116,7 @@ function showFilledData(items) {
         <th>Кол-во</th>
         <th>Цена</th>
         <th>Цвет</th>
-        <th>Кол-во позиций</th>
+        <th>Количество</th>
         <th>Доставка за позицию</th>
         <th>Общая доставка</th>
         <th>Итог (с доставкой)</th>

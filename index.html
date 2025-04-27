@@ -1,48 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Заказ товаров</title>
+  <title>Оформление заказа</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
   <div class="container">
     <h2>Оформление заказа</h2>
-    <div class="form-group">
-      <label for="order-number">Номер заказа</label>
-      <input type="text" id="order-number" placeholder="Введите номер заказа" required>
-    </div>
-    <div id="items">
-      <div class="item" id="item-1">
-        <h3>Товар 1</h3>
-        <div class="form-group">
-          <label>Ссылка на товар</label>
-          <input type="text" name="link" placeholder="Введите ссылку" required>
-        </div>
-        <div class="form-group">
-          <label>Размер</label>
-          <input type="text" name="size" placeholder="Введите размер" required>
-        </div>
-        <div class="form-group">
-          <label>Количество</label>
-          <input type="number" name="quantity" placeholder="Введите количество" required>
-        </div>
-        <div class="form-group">
-          <label>Цена (юани)</label>
-          <input type="number" name="price" placeholder="Введите цену" required>
-        </div>
-        <div class="form-group">
-          <label>Цвет</label>
-          <input type="text" name="color" placeholder="Введите цвет" required>
+    <form id="order-form">
+      <div class="form-group">
+        <label>Номер заказа</label>
+        <input type="text" id="order-number" placeholder="Введите номер заказа" required>
+      </div>
+      <div id="items">
+        <div class="item" id="item-1">
+          <h3>Товар 1</h3>
+          <div class="form-group">
+            <label>Ссылка на товар</label>
+            <input type="text" name="link" placeholder="Введите ссылку" required>
+          </div>
+          <div class="form-group">
+            <label>Размер</label>
+            <input type="text" name="size" placeholder="Введите размер" required>
+          </div>
+          <div class="form-group">
+            <label>Количество</label>
+            <input type="number" name="quantity" placeholder="Введите количество" required>
+          </div>
+          <div class="form-group">
+            <label>Цена (юани)</label>
+            <input type="number" name="price" placeholder="Введите цену" required>
+          </div>
+          <div class="form-group">
+            <label>Цвет</label>
+            <input type="text" name="color" placeholder="Введите цвет" required>
+          </div>
+          <div class="form-group">
+            <label>Фото товара</label>
+            <input type="file" name="photo" accept="image/*">
+          </div>
         </div>
       </div>
-    </div>
-    <button onclick="addItem()">Добавить ещё товар</button>
-    <button onclick="submitOrder()">Отправить заказ</button>
+      <button type="button" onclick="addItem()">Добавить ещё товар</button>
+      <button type="button" onclick="submitOrder()">Отправить заказ</button>
+    </form>
     <div id="result"></div>
   </div>
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'936d4fb35cb56732',t:'MTc0NTc0NjMzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

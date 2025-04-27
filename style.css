@@ -60,3 +60,27 @@ button:hover {
 #result th {
   background-color: #f2f2f2;
 }
+
+#result {
+  margin-top: 20px;
+  max-width: 100%;
+  overflow-x: auto; /* Горизонтальная прокрутка, если таблица слишком широкая */
+}
+
+#result table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto; /* Таблица адаптируется к содержимому */
+}
+
+#result th, #result td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+  white-space: nowrap; /* Текст не переносится, чтобы строки не ломались */
+}
+
+#result th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
