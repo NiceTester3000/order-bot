@@ -26,20 +26,25 @@ app.get('/', (req, res) => {
 
 app.post('/submit-order', upload.any(), async (req, res) => {
   try {
+    console.log("Получен запрос на /submit-order");
+
     const items = JSON.parse(req.body.items);
 
     if (!items || items.length === 0) {
+      console.log("Ошибка: Нет данных для заказа");
       return res.status(400).send('Нет данных для заказа');
     }
+
+    console.log("Данные заказа:", items);
 
     const ExcelJS = require('exceljs');
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Заказы');
 
     worksheet.columns = [
-      { header: 'Номер заказа', key: 'orderNumber', width: 15 },
+      { header: 'Товар', key: 'itemNumber', width: 10 },
       { header: 'Ссылка', key: 'link', width: 30 },
-      { header: 'Фото', key: 'photo', width: 30 }, // Переместили сюда
+      { header: 'Фото или ссылка на фото', key: 'photoLink', width: 50 },
       { header: 'Размер', key: 'size', width: 10 },
       { header: 'Кол-во', key: 'quantity', width: 10 },
       { header: 'Цена', key: 'price', width: 10 },
@@ -50,22 +55,15 @@ app.post('/submit-order', upload.any(), async (req, res) => {
       { header: 'Итог (с доставкой)', key: 'totalWithDelivery', width: 15 }
     ];
 
-    const photoIds = [];
+    // Временно убираем работу с фото для теста
+    const photoLinks = req.files.map((_, index) => `Фото для товара ${index + 1} (заглушка)`);
 
-    // Отправляем фото админу и сохраняем file_id
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-      const caption = `Фото для товара ${i + 1} (Заказ ${items[0].orderNumber})`;
-      const sentPhoto = await bot.sendPhoto(adminChatId, file.buffer, { caption });
-      photoIds[i] = sentPhoto.photo[sentPhoto.photo.length - 1].file_id;
-    }
-
-    // Добавляем file_id в данные для Excel
+    console.log("Добавляем данные в таблицу...");
     items.forEach((item, index) => {
       worksheet.addRow({
-        orderNumber: item.orderNumber,
+        itemNumber: item.itemNumber,
         link: item.link,
-        photo: photoIds[index] || 'Не загружено', // Добавляем file_id фото
+        photoLink: photoLinks[index] || 'Не загружено',
         size: item.size,
         quantity: item.quantity,
         price: item.price,
@@ -77,11 +75,14 @@ app.post('/submit-order', upload.any(), async (req, res) => {
       });
     });
 
+    console.log("Создаём Excel-файл...");
     const buffer = await workbook.xlsx.writeBuffer();
-    const fileName = `order_${items[0].orderNumber}.xlsx`;
+    const fileName = `order_${items[0].username}.xlsx`;
 
+    console.log("Отправляем Excel-файл админу...");
     await bot.sendDocument(adminChatId, buffer, {}, { filename: fileName, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
+    console.log("Заказ успешно обработан!");
     res.status(200).send('Заказ отправлен!');
   } catch (error) {
     console.error('Ошибка при обработке заказа:', error.message);
